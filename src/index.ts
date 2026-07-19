@@ -1,9 +1,10 @@
+import { loadConfig } from './config';
 import { createServer } from './server';
 import { logger } from './logger';
 
-const port = Number(process.env.PORT || 3000);
+const config = loadConfig();
 const app = createServer();
 
-app.listen(port, () => {
-  logger.info('server started', { port: port });
+app.listen(config.port, () => {
+  logger.info('server started', { port: config.port, mode: config.backendMode });
 });
