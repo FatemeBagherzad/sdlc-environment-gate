@@ -5,13 +5,13 @@ import { createWebhookHandler } from './webhook';
 export function createServer(config: AppConfig) {
   const app = express();
 
-  app.use(express.json());
-
   app.get('/health', (request, response) => {
     response.json({ status: 'ok' });
   });
 
-  app.post('/webhook', createWebhookHandler(config));
+  // the signature is calculated over the exact bytes github sent us, so the
+  // body must stay raw here
+  app.post('/webhook', express.raw({ type: 'application/json' }), createWebhookHandler(config));
 
   return app;
 }
