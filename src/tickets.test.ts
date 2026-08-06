@@ -38,3 +38,17 @@ describe('findTicketReference', () => {
     expect(findTicketReference('jira', sources)).toBeNull();
   });
 });
+
+describe('words that look like a ticket', () => {
+  it('ignores encoding names', () => {
+    const sources = [{ label: 'commit message', text: 'write the file as UTF-8 instead' }];
+
+    expect(findTicketReference('jira', sources)).toBeNull();
+  });
+
+  it('still finds the real key next to one of them', () => {
+    const sources = [{ label: 'commit message', text: 'SHA-256 checksum added, see OPS-19' }];
+
+    expect(findTicketReference('jira', sources)!.id).toBe('OPS-19');
+  });
+});
