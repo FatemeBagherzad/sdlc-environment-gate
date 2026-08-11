@@ -5,6 +5,7 @@ dotenv.config();
 export type BackendMode = 'local' | 'jira' | 'servicenow';
 
 export interface GithubConfig {
+  apiUrl: string;
   appId: string;
   privateKey: string;
   webhookSecret: string;
@@ -61,6 +62,7 @@ export function loadConfig(): AppConfig {
     port: Number(optional('PORT', '3000')),
     backendMode: readBackendMode(),
     github: {
+      apiUrl: optional('GITHUB_API_URL', 'https://api.github.com'),
       appId: required('GITHUB_APP_ID'),
       privateKey: decodePrivateKey(required('GITHUB_PRIVATE_KEY')),
       webhookSecret: required('GITHUB_WEBHOOK_SECRET')
