@@ -1,6 +1,7 @@
 import { AppConfig } from './config';
 import { createInstallationClient } from './github/client';
 import { collectTextSources } from './github/sources';
+import { sendDecision } from './github/callback';
 import { findTicketReference } from './tickets';
 import { ApprovalRequest } from './types';
 import { logger } from './logger';
@@ -62,7 +63,10 @@ export async function handleProtectionRuleEvent(config: AppConfig, payload: any)
   const reference = findTicketReference(config.backendMode, sources);
 
   if (!reference) {
-    logger.info('no ticket number found', { runId: request.runId });
+    const message =
+      'No change ticket number was found in the commit message, the pull request or its comments.';
+
+    await sendDecision(client, request, 'rejected', message);
     return;
   }
 
@@ -71,4 +75,7 @@ export async function handleProtectionRuleEvent(config: AppConfig, payload: any)
     foundIn: reference.foundIn,
     runId: request.runId
   });
+
+  // the backends are not here yet, for now finding the ticket is enough
+  await sendDecision(client, request, 'approved', 'Found ' + reference.id + ' in the ' + reference.foundIn + '.');
 }
