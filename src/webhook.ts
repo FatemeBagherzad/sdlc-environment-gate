@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 import { Request, Response } from 'express';
 import { AppConfig } from './config';
+import { handleProtectionRuleEvent } from './approval';
 import { logger } from './logger';
 
 export function verifySignature(secret: string, body: Buffer, signature: string | undefined): boolean {
@@ -34,6 +35,14 @@ export function createWebhookHandler(config: AppConfig) {
 
     logger.info('webhook received', { event: event, action: payload.action });
 
+    // github does not wait long for the webhook response, so answer first and
+    // do the real work after that
     response.status(204).end();
+
+    if (event === 'deployment_protection_rule' && payload.action === 'requested') {
+      handleProtectionRuleEvent(config, payload).catch((error) => {
+        logger.error('handling the event failed', { error: String(error) });
+      });
+    }
   };
 }
