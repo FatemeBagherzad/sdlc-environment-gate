@@ -11,10 +11,15 @@ export interface GithubConfig {
   webhookSecret: string;
 }
 
+export interface LocalConfig {
+  ticketsPath: string;
+}
+
 export interface AppConfig {
   port: number;
   backendMode: BackendMode;
   github: GithubConfig;
+  local: LocalConfig;
 }
 
 function required(name: string): string {
@@ -66,6 +71,9 @@ export function loadConfig(): AppConfig {
       appId: required('GITHUB_APP_ID'),
       privateKey: decodePrivateKey(required('GITHUB_PRIVATE_KEY')),
       webhookSecret: required('GITHUB_WEBHOOK_SECRET')
+    },
+    local: {
+      ticketsPath: optional('LOCAL_TICKETS_PATH', './tickets')
     }
   };
 }
