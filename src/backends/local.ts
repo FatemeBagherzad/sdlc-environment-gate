@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { LocalConfig } from '../config';
+import { parseDate } from '../dates';
 import { TicketApproval, TicketInfo } from '../types';
 import { TicketBackend } from './backend';
 
@@ -23,13 +24,14 @@ export class LocalBackend implements TicketBackend {
     }
 
     const content = fs.readFileSync(file, 'utf8');
+    const fields = readFields(content);
 
     return {
       id: ticketId,
-      approval: readApproval(content),
-      statusText: readApproval(content),
-      windowStart: null,
-      windowEnd: null,
+      approval: readApproval(content, fields),
+      statusText: fields['status'] || readApproval(content, fields),
+      windowStart: parseDate(fields['window_start'] || fields['start']),
+      windowEnd: parseDate(fields['window_end'] || fields['end']),
       lookedUpAt: file
     };
   }
@@ -49,8 +51,29 @@ export class LocalBackend implements TicketBackend {
   }
 }
 
-function readApproval(content: string): TicketApproval {
-  const text = content.toLowerCase();
+// a ticket file looks like this:
+//   status: approved
+//   window_start: 2026-09-01T18:00:00Z
+//   window_end: 2026-09-01T22:00:00Z
+function readFields(content: string): Record<string, string> {
+  const fields: Record<string, string> = {};
+
+  for (const line of content.split('\n')) {
+    const separator = line.indexOf(':');
+
+    if (separator > 0) {
+      const key = line.substring(0, separator).trim().toLowerCase();
+      fields[key] = line.substring(separator + 1).trim();
+    }
+  }
+
+  return fields;
+}
+
+function readApproval(content: string, fields: Record<string, string>): TicketApproval {
+  // a file with only the word approved in it is also accepted, that is the
+  // quickest way to try the app
+  const text = (fields['status'] || content).toLowerCase();
 
   if (text.includes('denied') || text.includes('rejected')) {
     return 'rejected';
