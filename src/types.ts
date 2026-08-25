@@ -27,9 +27,12 @@ export interface ApprovalRequest {
   pullRequests: number[];
 }
 
-// TODO: the decision also needs a short version for the github comment,
-// github does not show a long one on the deployment
+export type DecisionType = 'approve' | 'reject' | 'wait';
+
 export interface Decision {
-  type: 'approve' | 'reject' | 'wait';
-  reason: string;
+  type: DecisionType;
+  // github only shows a short comment on the deployment, the long version goes
+  // to the logs and to the pull request
+  summary: string;
+  detail: string;
 }

@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 import { Request, Response } from 'express';
 import { AppConfig } from './config';
+import { TicketBackend } from './backends/backend';
 import { handleProtectionRuleEvent } from './approval';
 import { logger } from './logger';
 
@@ -19,7 +20,7 @@ export function verifySignature(secret: string, body: Buffer, signature: string 
   return crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(signature));
 }
 
-export function createWebhookHandler(config: AppConfig) {
+export function createWebhookHandler(config: AppConfig, backend: TicketBackend) {
   return function handleWebhook(request: Request, response: Response): void {
     const signature = request.header('x-hub-signature-256');
     const rawBody = request.body as Buffer;
@@ -40,7 +41,7 @@ export function createWebhookHandler(config: AppConfig) {
     response.status(204).end();
 
     if (event === 'deployment_protection_rule' && payload.action === 'requested') {
-      handleProtectionRuleEvent(config, payload).catch((error) => {
+      handleProtectionRuleEvent(config, backend, payload).catch((error) => {
         logger.error('handling the event failed', { error: String(error) });
       });
     }
