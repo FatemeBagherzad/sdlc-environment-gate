@@ -39,6 +39,20 @@ export function decide(input: DecisionInput): Decision {
     };
   }
 
+  // this has to come before the approval check, a ticket that is still waiting
+  // for an approval it will never get should not keep the deployment pending
+  if (ticket.windowEnd && input.now > ticket.windowEnd) {
+    return {
+      type: 'reject',
+      summary: 'The approval window of ' + ticket.id + ' ended at ' + formatDate(ticket.windowEnd) + '.',
+      detail:
+        'Change ticket ' + ticket.id + ' ' + foundIn + '. ' + state +
+        ' The approval window ' + window + ' has already ended and the current time is ' + now +
+        '. The deployment is rejected, a new change ticket is needed. Checked at ' +
+        ticket.lookedUpAt + '.'
+    };
+  }
+
   if (ticket.approval === 'pending') {
     return {
       type: 'wait',
@@ -47,18 +61,6 @@ export function decide(input: DecisionInput): Decision {
         'Change ticket ' + ticket.id + ' ' + foundIn + '. ' + state +
         ' The ticket is not approved yet, so the deployment stays pending and the ticket is' +
         ' checked again. The approval window is ' + window + '. Checked at ' + ticket.lookedUpAt + '.'
-    };
-  }
-
-  if (ticket.windowEnd && input.now > ticket.windowEnd) {
-    return {
-      type: 'reject',
-      summary: 'The approval window of ' + ticket.id + ' ended at ' + formatDate(ticket.windowEnd) + '.',
-      detail:
-        'Change ticket ' + ticket.id + ' ' + foundIn + ' and it is approved, but its approval' +
-        ' window ' + window + ' has already ended. The current time is ' + now +
-        '. The deployment is rejected, a new change ticket is needed. Checked at ' +
-        ticket.lookedUpAt + '.'
     };
   }
 
