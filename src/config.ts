@@ -15,11 +15,18 @@ export interface LocalConfig {
   ticketsPath: string;
 }
 
+export interface JiraConfig {
+  baseUrl: string;
+  email: string;
+  apiToken: string;
+}
+
 export interface AppConfig {
   port: number;
   backendMode: BackendMode;
   github: GithubConfig;
   local: LocalConfig;
+  jira: JiraConfig;
 }
 
 function required(name: string): string {
@@ -74,6 +81,11 @@ export function loadConfig(): AppConfig {
     },
     local: {
       ticketsPath: optional('LOCAL_TICKETS_PATH', './tickets')
+    },
+    jira: {
+      baseUrl: optional('JIRA_BASE_URL', ''),
+      email: optional('JIRA_EMAIL', ''),
+      apiToken: optional('JIRA_API_TOKEN', '')
     }
   };
 }
