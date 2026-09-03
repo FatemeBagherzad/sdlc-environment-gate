@@ -19,6 +19,8 @@ export interface JiraConfig {
   baseUrl: string;
   email: string;
   apiToken: string;
+  approvedStatuses: string[];
+  rejectedStatuses: string[];
 }
 
 export interface AppConfig {
@@ -59,6 +61,13 @@ function decodePrivateKey(value: string): string {
   return Buffer.from(value, 'base64').toString('utf8');
 }
 
+function readList(name: string, fallback: string): string[] {
+  return optional(name, fallback)
+    .split(',')
+    .map((item) => item.trim().toLowerCase())
+    .filter((item) => item.length > 0);
+}
+
 function readBackendMode(): BackendMode {
   const value = optional('BACKEND_MODE', 'local').toLowerCase();
 
@@ -85,7 +94,9 @@ export function loadConfig(): AppConfig {
     jira: {
       baseUrl: optional('JIRA_BASE_URL', ''),
       email: optional('JIRA_EMAIL', ''),
-      apiToken: optional('JIRA_API_TOKEN', '')
+      apiToken: optional('JIRA_API_TOKEN', ''),
+      approvedStatuses: readList('JIRA_APPROVED_STATUSES', 'approved'),
+      rejectedStatuses: readList('JIRA_REJECTED_STATUSES', 'rejected,cancelled')
     }
   };
 }

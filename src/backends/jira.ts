@@ -40,25 +40,26 @@ export class JiraBackend implements TicketBackend {
 
     return {
       id: response.data.key,
-      approval: readApproval(statusText),
+      approval: this.readApproval(statusText),
       statusText: statusText,
       windowStart: null,
       windowEnd: null,
       lookedUpAt: this.config.baseUrl + '/browse/' + ticketId
     };
   }
-}
 
-function readApproval(statusText: string): TicketApproval {
-  const status = statusText.toLowerCase();
+  // every project names its statuses differently so the names are configuration
+  private readApproval(statusText: string): TicketApproval {
+    const status = statusText.toLowerCase();
 
-  if (status === 'rejected' || status === 'cancelled') {
-    return 'rejected';
+    if (this.config.rejectedStatuses.includes(status)) {
+      return 'rejected';
+    }
+
+    if (this.config.approvedStatuses.includes(status)) {
+      return 'approved';
+    }
+
+    return 'pending';
   }
-
-  if (status === 'approved') {
-    return 'approved';
-  }
-
-  return 'pending';
 }
