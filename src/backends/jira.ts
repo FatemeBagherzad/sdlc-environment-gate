@@ -1,6 +1,6 @@
 import axios, { AxiosInstance } from 'axios';
 import { JiraConfig } from '../config';
-import { parseDate } from '../dates';
+import { parseDate, parseWindowEnd } from '../dates';
 import { TicketApproval, TicketInfo } from '../types';
 import { TicketBackend } from './backend';
 
@@ -44,7 +44,7 @@ export class JiraBackend implements TicketBackend {
       approval: this.readApproval(statusText),
       statusText: statusText,
       windowStart: parseDate(readField(fields, this.config.windowStartField)),
-      windowEnd: parseDate(readField(fields, this.config.windowEndField)),
+      windowEnd: parseWindowEnd(readField(fields, this.config.windowEndField)),
       lookedUpAt: this.config.baseUrl + '/browse/' + ticketId
     };
   }

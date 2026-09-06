@@ -12,6 +12,19 @@ export function parseDate(value: string | null | undefined): Date | null {
   return parsed;
 }
 
+const dayOnly = /^\d{4}-\d{2}-\d{2}$/;
+
+// A jira due date is only a day, like 2026-09-20, with no time in it. As the end
+// of a window that has to mean the end of that day. Reading it as plain midnight
+// would close the window before the day even starts.
+export function parseWindowEnd(value: string | null | undefined): Date | null {
+  if (value && dayOnly.test(value.trim())) {
+    return parseDate(value.trim() + 'T23:59:59Z');
+  }
+
+  return parseDate(value);
+}
+
 export function formatDate(value: Date): string {
   return value.toISOString();
 }
