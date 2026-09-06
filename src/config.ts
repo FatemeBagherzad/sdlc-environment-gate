@@ -21,6 +21,8 @@ export interface JiraConfig {
   apiToken: string;
   approvedStatuses: string[];
   rejectedStatuses: string[];
+  windowStartField: string;
+  windowEndField: string;
 }
 
 export interface AppConfig {
@@ -96,7 +98,9 @@ export function loadConfig(): AppConfig {
       email: optional('JIRA_EMAIL', ''),
       apiToken: optional('JIRA_API_TOKEN', ''),
       approvedStatuses: readList('JIRA_APPROVED_STATUSES', 'approved'),
-      rejectedStatuses: readList('JIRA_REJECTED_STATUSES', 'rejected,cancelled')
+      rejectedStatuses: readList('JIRA_REJECTED_STATUSES', 'rejected,cancelled'),
+      windowStartField: optional('JIRA_WINDOW_START_FIELD', ''),
+      windowEndField: optional('JIRA_WINDOW_END_FIELD', 'duedate')
     }
   };
 }
