@@ -2,6 +2,7 @@ import { AppConfig } from '../config';
 import { TicketBackend } from './backend';
 import { LocalBackend } from './local';
 import { JiraBackend } from './jira';
+import { ServiceNowBackend } from './servicenow';
 
 export function createBackend(config: AppConfig): TicketBackend {
   if (config.backendMode === 'local') {
@@ -12,5 +13,5 @@ export function createBackend(config: AppConfig): TicketBackend {
     return new JiraBackend(config.jira);
   }
 
-  throw new Error('backend mode ' + config.backendMode + ' is not implemented yet');
+  return new ServiceNowBackend(config.serviceNow);
 }

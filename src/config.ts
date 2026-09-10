@@ -25,12 +25,19 @@ export interface JiraConfig {
   windowEndField: string;
 }
 
+export interface ServiceNowConfig {
+  baseUrl: string;
+  username: string;
+  password: string;
+}
+
 export interface AppConfig {
   port: number;
   backendMode: BackendMode;
   github: GithubConfig;
   local: LocalConfig;
   jira: JiraConfig;
+  serviceNow: ServiceNowConfig;
 }
 
 function required(name: string): string {
@@ -101,6 +108,11 @@ export function loadConfig(): AppConfig {
       rejectedStatuses: readList('JIRA_REJECTED_STATUSES', 'rejected,cancelled'),
       windowStartField: optional('JIRA_WINDOW_START_FIELD', ''),
       windowEndField: optional('JIRA_WINDOW_END_FIELD', 'duedate')
+    },
+    serviceNow: {
+      baseUrl: optional('SERVICENOW_BASE_URL', ''),
+      username: optional('SERVICENOW_USERNAME', ''),
+      password: optional('SERVICENOW_PASSWORD', '')
     }
   };
 }
