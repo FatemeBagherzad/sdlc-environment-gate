@@ -29,6 +29,8 @@ export interface ServiceNowConfig {
   baseUrl: string;
   username: string;
   password: string;
+  approvedStates: string[];
+  rejectedStates: string[];
 }
 
 export interface AppConfig {
@@ -112,7 +114,9 @@ export function loadConfig(): AppConfig {
     serviceNow: {
       baseUrl: optional('SERVICENOW_BASE_URL', ''),
       username: optional('SERVICENOW_USERNAME', ''),
-      password: optional('SERVICENOW_PASSWORD', '')
+      password: optional('SERVICENOW_PASSWORD', ''),
+      approvedStates: readList('SERVICENOW_APPROVED_STATES', 'scheduled,implement'),
+      rejectedStates: readList('SERVICENOW_REJECTED_STATES', 'cancelled,closed')
     }
   };
 }

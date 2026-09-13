@@ -1,7 +1,7 @@
 import axios, { AxiosInstance } from 'axios';
 import { ServiceNowConfig } from '../config';
 import { parseDate } from '../dates';
-import { TicketInfo } from '../types';
+import { TicketApproval, TicketInfo } from '../types';
 import { TicketBackend } from './backend';
 
 // Only the table api is used here. It is on by default on every instance,
@@ -30,7 +30,9 @@ export class ServiceNowBackend implements TicketBackend {
     const response = await this.client.get('/api/now/table/change_request', {
       params: {
         sysparm_query: 'number=' + ticketId,
-        sysparm_limit: 1
+        sysparm_limit: 1,
+        sysparm_fields: 'number,sys_id,approval,state,start_date,end_date',
+        sysparm_display_value: 'all'
       }
     });
 
@@ -41,14 +43,52 @@ export class ServiceNowBackend implements TicketBackend {
     }
 
     const change = rows[0];
+    const approval = readValue(change.approval);
+    const state = readValue(change.state);
 
     return {
-      id: change.number,
-      approval: 'pending',
-      statusText: change.approval,
-      windowStart: parseDate(change.start_date),
-      windowEnd: parseDate(change.end_date),
-      lookedUpAt: this.config.baseUrl + '/nav_to.do?uri=change_request.do?sys_id=' + change.sys_id
+      id: readValue(change.number),
+      approval: this.readApproval(approval, state),
+      statusText: 'approval ' + approval + ', state ' + state,
+      windowStart: parseDate(readValue(change.start_date)),
+      windowEnd: parseDate(readValue(change.end_date)),
+      lookedUpAt:
+        this.config.baseUrl + '/nav_to.do?uri=change_request.do?sys_id=' + readValue(change.sys_id)
     };
   }
+
+  // a change is only good to go when the approval is given and the change is
+  // not closed or cancelled already
+  private readApproval(approval: string, state: string): TicketApproval {
+    const currentState = state.toLowerCase();
+    const currentApproval = approval.toLowerCase();
+
+    if (this.config.rejectedStates.includes(currentState)) {
+      return 'rejected';
+    }
+
+    if (currentApproval === 'rejected' || currentApproval === 'not approved') {
+      return 'rejected';
+    }
+
+    if (currentApproval === 'approved' && this.config.approvedStates.includes(currentState)) {
+      return 'approved';
+    }
+
+    return 'pending';
+  }
+}
+
+// with sysparm_display_value=all every field comes back as an object with a
+// value and a display_value in it
+function readValue(field: any): string {
+  if (field === null || field === undefined) {
+    return '';
+  }
+
+  if (typeof field === 'object') {
+    return field.display_value || field.value || '';
+  }
+
+  return String(field);
 }
