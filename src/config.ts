@@ -116,7 +116,7 @@ export function loadConfig(): AppConfig {
       username: optional('SERVICENOW_USERNAME', ''),
       password: optional('SERVICENOW_PASSWORD', ''),
       approvedStates: readList('SERVICENOW_APPROVED_STATES', 'scheduled,implement'),
-      rejectedStates: readList('SERVICENOW_REJECTED_STATES', 'cancelled,closed')
+      rejectedStates: readList('SERVICENOW_REJECTED_STATES', 'canceled,cancelled,closed')
     }
   };
 }

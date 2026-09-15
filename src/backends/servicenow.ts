@@ -57,8 +57,9 @@ export class ServiceNowBackend implements TicketBackend {
     };
   }
 
-  // a change is only good to go when the approval is given and the change is
-  // not closed or cancelled already
+  // A change is only good to go when the approval is given and the change is
+  // not closed or cancelled already. Careful with the spelling, my instance
+  // shows Canceled with one l, older ones have two, so both are in the default.
   private readApproval(approval: string, state: string): TicketApproval {
     const currentState = state.toLowerCase();
     const currentApproval = approval.toLowerCase();
