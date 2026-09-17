@@ -5,6 +5,10 @@ describe('parseDate', () => {
     expect(parseDate('2026-09-14T18:00:00Z')!.toISOString()).toBe('2026-09-14T18:00:00.000Z');
   });
 
+  it('treats a servicenow date as utc', () => {
+    expect(parseDate('2026-09-14 18:00:00')!.toISOString()).toBe('2026-09-14T18:00:00.000Z');
+  });
+
   it('returns null for an empty value', () => {
     expect(parseDate('')).toBeNull();
     expect(parseDate(undefined)).toBeNull();

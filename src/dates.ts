@@ -1,9 +1,21 @@
+// servicenow sends dates like "2026-09-14 18:00:00" and those are utc, but
+// node reads them as local time, so the timezone has to be added
+function addTimezone(value: string): string {
+  const withoutTimezone = /^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}(:\d{2})?$/;
+
+  if (withoutTimezone.test(value)) {
+    return value.replace(' ', 'T') + 'Z';
+  }
+
+  return value;
+}
+
 export function parseDate(value: string | null | undefined): Date | null {
   if (!value) {
     return null;
   }
 
-  const parsed = new Date(value.trim());
+  const parsed = new Date(addTimezone(value.trim()));
 
   if (isNaN(parsed.getTime())) {
     return null;
