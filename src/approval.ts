@@ -1,5 +1,6 @@
 import { AppConfig } from './config';
 import { TicketBackend } from './backends/backend';
+import { PendingStore } from './pending';
 import { createInstallationClient } from './github/client';
 import { collectTextSources } from './github/sources';
 import { sendDecision } from './github/callback';
@@ -49,6 +50,7 @@ export function buildApprovalRequest(payload: any): ApprovalRequest | null {
 export async function handleProtectionRuleEvent(
   config: AppConfig,
   backend: TicketBackend,
+  store: PendingStore,
   payload: any
 ): Promise<void> {
   const request = buildApprovalRequest(payload);
@@ -96,13 +98,24 @@ export async function handleProtectionRuleEvent(
 
   if (decision.type === 'approve') {
     await sendDecision(client, request, 'approved', decision.summary);
+    store.remove(request);
     return;
   }
 
   if (decision.type === 'reject') {
     await sendDecision(client, request, 'rejected', decision.summary);
+    store.remove(request);
     return;
   }
 
-  // nothing to send for a wait, github keeps the deployment pending
+  // nothing is sent to github for a wait, the deployment stays pending there
+  // and we keep the ticket so it can be looked at again
+  const stamp = new Date().toISOString();
+
+  store.save({
+    request: request,
+    firstSeenAt: stamp,
+    lastCheckedAt: stamp,
+    lastMessage: decision.summary
+  });
 }
