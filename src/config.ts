@@ -37,6 +37,7 @@ export interface AppConfig {
   port: number;
   backendMode: BackendMode;
   stateDir: string;
+  recheckIntervalSeconds: number;
   github: GithubConfig;
   local: LocalConfig;
   jira: JiraConfig;
@@ -95,6 +96,7 @@ export function loadConfig(): AppConfig {
     port: Number(optional('PORT', '3000')),
     backendMode: readBackendMode(),
     stateDir: optional('STATE_DIR', './state'),
+    recheckIntervalSeconds: Number(optional('RECHECK_INTERVAL_SECONDS', '60')),
     github: {
       apiUrl: optional('GITHUB_API_URL', 'https://api.github.com'),
       appId: required('GITHUB_APP_ID'),
