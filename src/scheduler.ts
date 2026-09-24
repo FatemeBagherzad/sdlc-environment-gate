@@ -1,10 +1,6 @@
 import { AppConfig } from './config';
 import { TicketBackend } from './backends/backend';
-import { createInstallationClient } from './github/client';
-import { collectTextSources } from './github/sources';
-import { sendDecision } from './github/callback';
-import { findTicketReference } from './tickets';
-import { decide } from './decision';
+import { evaluateRequest } from './evaluate';
 import { ClaimedItem, PendingStore } from './pending';
 import { logger } from './logger';
 
@@ -14,48 +10,9 @@ async function checkOne(
   store: PendingStore,
   claimed: ClaimedItem
 ): Promise<void> {
-  const request = claimed.item.request;
-  const client = await createInstallationClient(config.github, request.installationId);
-  const sources = await collectTextSources(client, request);
-  const reference = findTicketReference(config.backendMode, sources);
+  const decision = await evaluateRequest(config, backend, claimed.item.request);
 
-  if (!reference) {
-    await sendDecision(
-      client,
-      request,
-      'rejected',
-      'No change ticket number was found for this deployment.'
-    );
-
-    store.finish(claimed);
-    return;
-  }
-
-  const ticket = await backend.lookup(reference.id);
-
-  const decision = decide({
-    reference: reference,
-    ticket: ticket,
-    backendName: backend.name,
-    now: new Date()
-  });
-
-  logger.info('waiting deployment checked again', {
-    runId: request.runId,
-    environment: request.environment,
-    ticket: reference.id,
-    decision: decision.type,
-    detail: decision.detail
-  });
-
-  if (decision.type === 'approve') {
-    await sendDecision(client, request, 'approved', decision.summary);
-    store.finish(claimed);
-    return;
-  }
-
-  if (decision.type === 'reject') {
-    await sendDecision(client, request, 'rejected', decision.summary);
+  if (decision.type !== 'wait') {
     store.finish(claimed);
     return;
   }
@@ -80,6 +37,7 @@ async function runOnce(
     } catch (error) {
       logger.error('could not check a waiting deployment', {
         runId: entry.item.request.runId,
+        environment: entry.item.request.environment,
         error: String(error)
       });
 

@@ -1,11 +1,7 @@
 import { AppConfig } from './config';
 import { TicketBackend } from './backends/backend';
 import { PendingStore } from './pending';
-import { createInstallationClient } from './github/client';
-import { collectTextSources } from './github/sources';
-import { sendDecision } from './github/callback';
-import { findTicketReference } from './tickets';
-import { decide } from './decision';
+import { evaluateRequest } from './evaluate';
 import { ApprovalRequest } from './types';
 import { logger } from './logger';
 
@@ -66,44 +62,9 @@ export async function handleProtectionRuleEvent(
     runId: request.runId
   });
 
-  const client = await createInstallationClient(config.github, request.installationId);
-  const sources = await collectTextSources(client, request);
-  const reference = findTicketReference(config.backendMode, sources);
+  const decision = await evaluateRequest(config, backend, request);
 
-  if (!reference) {
-    const message =
-      'No change ticket number was found in the commit message, in the pull request or in its' +
-      ' comments. The deployment is rejected.';
-
-    logger.info('no ticket number found', { runId: request.runId });
-    await sendDecision(client, request, 'rejected', message);
-    return;
-  }
-
-  const ticket = await backend.lookup(reference.id);
-
-  const decision = decide({
-    reference: reference,
-    ticket: ticket,
-    backendName: backend.name,
-    now: new Date()
-  });
-
-  logger.info('decision taken', {
-    runId: request.runId,
-    ticket: reference.id,
-    decision: decision.type,
-    detail: decision.detail
-  });
-
-  if (decision.type === 'approve') {
-    await sendDecision(client, request, 'approved', decision.summary);
-    store.remove(request);
-    return;
-  }
-
-  if (decision.type === 'reject') {
-    await sendDecision(client, request, 'rejected', decision.summary);
+  if (decision.type !== 'wait') {
     store.remove(request);
     return;
   }
