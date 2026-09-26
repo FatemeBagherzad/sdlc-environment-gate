@@ -1,3 +1,4 @@
+import os from 'os';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -37,6 +38,7 @@ export interface AppConfig {
   port: number;
   backendMode: BackendMode;
   stateDir: string;
+  workerCount: number;
   recheckIntervalSeconds: number;
   github: GithubConfig;
   local: LocalConfig;
@@ -81,6 +83,18 @@ function readList(name: string, fallback: string): string[] {
     .filter((item) => item.length > 0);
 }
 
+// one worker per cpu, but there is no point in going over four of them, the
+// work is mostly waiting for jira or servicenow to answer
+function readWorkerCount(): number {
+  const configured = Number(optional('WORKER_COUNT', '0'));
+
+  if (configured > 0) {
+    return configured;
+  }
+
+  return Math.min(os.cpus().length, 4);
+}
+
 function readBackendMode(): BackendMode {
   const value = optional('BACKEND_MODE', 'local').toLowerCase();
 
@@ -96,6 +110,7 @@ export function loadConfig(): AppConfig {
     port: Number(optional('PORT', '3000')),
     backendMode: readBackendMode(),
     stateDir: optional('STATE_DIR', './state'),
+    workerCount: readWorkerCount(),
     recheckIntervalSeconds: Number(optional('RECHECK_INTERVAL_SECONDS', '60')),
     github: {
       apiUrl: optional('GITHUB_API_URL', 'https://api.github.com'),
