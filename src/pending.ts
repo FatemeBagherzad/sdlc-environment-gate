@@ -86,6 +86,28 @@ export class PendingStore {
   finish(claimed: ClaimedItem): void {
     removeIfThere(path.join(this.workingDir, claimed.fileName));
   }
+
+  // A worker that dies in the middle of a check leaves its file behind in the
+  // working folder. Nobody would ever look at it again, so the files are moved
+  // back to the waiting folder.
+  recover(): number {
+    let moved = 0;
+
+    for (const fileName of fs.readdirSync(this.workingDir)) {
+      try {
+        fs.renameSync(
+          path.join(this.workingDir, fileName),
+          path.join(this.waitingDir, fileName)
+        );
+
+        moved = moved + 1;
+      } catch (error) {
+        // another worker was faster, that is fine
+      }
+    }
+
+    return moved;
+  }
 }
 
 function fileNameFor(request: ApprovalRequest): string {

@@ -15,6 +15,12 @@ function startPrimary(): void {
   const store = new PendingStore(config.stateDir);
   store.prepare();
 
+  const recovered = store.recover();
+
+  if (recovered > 0) {
+    logger.info('deployments picked up from the last run', { count: recovered });
+  }
+
   logger.info('starting workers', {
     workers: config.workerCount,
     mode: config.backendMode
@@ -31,6 +37,8 @@ function startPrimary(): void {
       signal: signal
     });
 
+    // whatever that worker was holding has to go back to the waiting folder
+    store.recover();
     cluster.fork();
   });
 }
