@@ -25,6 +25,8 @@ describe('decide', () => {
       reference: reference,
       ticket: null,
       backendName: 'ServiceNow',
+      maxWaitMinutes: 720,
+      waitingSince: at('2026-09-01T08:00:00Z'),
       now: at('2026-09-01T19:00:00Z')
     });
 
@@ -40,6 +42,8 @@ describe('decide', () => {
         windowEnd: at('2026-09-01T22:00:00Z')
       }),
       backendName: 'ServiceNow',
+      maxWaitMinutes: 720,
+      waitingSince: at('2026-09-01T08:00:00Z'),
       now: at('2026-09-01T19:00:00Z')
     });
 
@@ -51,6 +55,8 @@ describe('decide', () => {
       reference: reference,
       ticket: ticket({}),
       backendName: 'ServiceNow',
+      maxWaitMinutes: 720,
+      waitingSince: at('2026-09-01T08:00:00Z'),
       now: at('2026-09-01T19:00:00Z')
     });
 
@@ -65,6 +71,8 @@ describe('decide', () => {
         windowEnd: at('2026-09-01T22:00:00Z')
       }),
       backendName: 'ServiceNow',
+      maxWaitMinutes: 720,
+      waitingSince: at('2026-09-01T08:00:00Z'),
       now: at('2026-09-01T09:00:00Z')
     });
 
@@ -80,6 +88,8 @@ describe('decide', () => {
         windowEnd: at('2026-09-01T22:00:00Z')
       }),
       backendName: 'ServiceNow',
+      maxWaitMinutes: 720,
+      waitingSince: at('2026-09-01T08:00:00Z'),
       now: at('2026-09-02T08:00:00Z')
     });
 
@@ -96,6 +106,8 @@ describe('decide', () => {
         windowEnd: at('2026-09-01T22:00:00Z')
       }),
       backendName: 'ServiceNow',
+      maxWaitMinutes: 720,
+      waitingSince: at('2026-09-01T08:00:00Z'),
       now: at('2026-09-01T19:00:00Z')
     });
 
@@ -111,10 +123,26 @@ describe('decide', () => {
         windowEnd: at('2026-09-01T22:00:00Z')
       }),
       backendName: 'ServiceNow',
+      maxWaitMinutes: 720,
+      waitingSince: at('2026-09-01T08:00:00Z'),
       now: at('2026-09-03T19:00:00Z')
     });
 
     expect(decision.type).toBe('reject');
+  });
+
+  it('gives up when it waited longer than it is allowed to', () => {
+    const decision = decide({
+      reference: reference,
+      ticket: ticket({ approval: 'pending', statusText: 'Assess' }),
+      backendName: 'ServiceNow',
+      maxWaitMinutes: 60,
+      waitingSince: at('2026-09-01T08:00:00Z'),
+      now: at('2026-09-01T19:00:00Z')
+    });
+
+    expect(decision.type).toBe('reject');
+    expect(decision.summary).toContain('Gave up');
   });
 
   it('rejects a ticket that was turned down', () => {
@@ -122,6 +150,8 @@ describe('decide', () => {
       reference: reference,
       ticket: ticket({ approval: 'rejected', statusText: 'Rejected' }),
       backendName: 'ServiceNow',
+      maxWaitMinutes: 720,
+      waitingSince: at('2026-09-01T08:00:00Z'),
       now: at('2026-09-01T19:00:00Z')
     });
 

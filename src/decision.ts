@@ -6,6 +6,38 @@ export interface DecisionInput {
   ticket: TicketInfo | null;
   backendName: string;
   now: Date;
+  waitingSince: Date;
+  maxWaitMinutes: number;
+}
+
+function minutesWaited(input: DecisionInput): number {
+  const milliseconds = input.now.getTime() - input.waitingSince.getTime();
+
+  return Math.floor(milliseconds / 60000);
+}
+
+// A wait leaves the deployment pending in github. That cannot go on forever,
+// github drops the deployment after 30 days anyway, so the app gives up after
+// the configured time and rejects it with a message instead.
+function waitOrGiveUp(input: DecisionInput, summary: string, detail: string): Decision {
+  const waited = minutesWaited(input);
+
+  if (waited < input.maxWaitMinutes) {
+    return {
+      type: 'wait',
+      summary: summary,
+      detail: detail
+    };
+  }
+
+  return {
+    type: 'reject',
+    summary: 'Gave up on ' + input.reference.id + ' after waiting ' + waited + ' minutes.',
+    detail:
+      detail + ' This deployment has been waiting for ' + waited + ' minutes, which is longer' +
+      ' than the ' + input.maxWaitMinutes + ' minutes the app is allowed to wait, so it is' +
+      ' rejected now.'
+  };
 }
 
 export function decide(input: DecisionInput): Decision {
@@ -54,25 +86,23 @@ export function decide(input: DecisionInput): Decision {
   }
 
   if (ticket.approval === 'pending') {
-    return {
-      type: 'wait',
-      summary: 'Waiting for ' + ticket.id + ' to be approved, its state is "' + ticket.statusText + '".',
-      detail:
-        'Change ticket ' + ticket.id + ' ' + foundIn + '. ' + state +
+    return waitOrGiveUp(
+      input,
+      'Waiting for ' + ticket.id + ' to be approved, its state is "' + ticket.statusText + '".',
+      'Change ticket ' + ticket.id + ' ' + foundIn + '. ' + state +
         ' The ticket is not approved yet, so the deployment stays pending and the ticket is' +
         ' checked again. The approval window is ' + window + '. Checked at ' + ticket.lookedUpAt + '.'
-    };
+    );
   }
 
   if (ticket.windowStart && input.now < ticket.windowStart) {
-    return {
-      type: 'wait',
-      summary: ticket.id + ' is approved but its window starts at ' + formatDate(ticket.windowStart) + '.',
-      detail:
-        'Change ticket ' + ticket.id + ' ' + foundIn + ' and it is approved, but the approval' +
+    return waitOrGiveUp(
+      input,
+      ticket.id + ' is approved but its window starts at ' + formatDate(ticket.windowStart) + '.',
+      'Change ticket ' + ticket.id + ' ' + foundIn + ' and it is approved, but the approval' +
         ' window ' + window + ' has not started yet. The current time is ' + now +
         '. The deployment stays pending until the window opens. Checked at ' + ticket.lookedUpAt + '.'
-    };
+    );
   }
 
   return {

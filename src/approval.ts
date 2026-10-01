@@ -62,7 +62,7 @@ export async function handleProtectionRuleEvent(
     runId: request.runId
   });
 
-  const decision = await evaluateRequest(config, backend, request);
+  const decision = await evaluateRequest(config, backend, request, new Date());
 
   if (decision.type !== 'wait') {
     store.remove(request);

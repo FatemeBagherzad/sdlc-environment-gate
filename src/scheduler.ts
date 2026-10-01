@@ -10,7 +10,12 @@ async function checkOne(
   store: PendingStore,
   claimed: ClaimedItem
 ): Promise<void> {
-  const decision = await evaluateRequest(config, backend, claimed.item.request);
+  const decision = await evaluateRequest(
+    config,
+    backend,
+    claimed.item.request,
+    new Date(claimed.item.firstSeenAt)
+  );
 
   if (decision.type !== 'wait') {
     store.finish(claimed);

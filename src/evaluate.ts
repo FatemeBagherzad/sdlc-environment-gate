@@ -22,7 +22,8 @@ const noTicketFound: Decision = {
 export async function evaluateRequest(
   config: AppConfig,
   backend: TicketBackend,
-  request: ApprovalRequest
+  request: ApprovalRequest,
+  waitingSince: Date
 ): Promise<Decision> {
   const client = await createInstallationClient(config.github, request.installationId);
   const sources = await collectTextSources(client, request);
@@ -44,7 +45,9 @@ export async function evaluateRequest(
     reference: reference,
     ticket: ticket,
     backendName: backend.name,
-    now: new Date()
+    now: new Date(),
+    waitingSince: waitingSince,
+    maxWaitMinutes: config.maxWaitMinutes
   });
 
   logger.info('decision taken', {

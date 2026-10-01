@@ -40,6 +40,7 @@ export interface AppConfig {
   stateDir: string;
   workerCount: number;
   recheckIntervalSeconds: number;
+  maxWaitMinutes: number;
   github: GithubConfig;
   local: LocalConfig;
   jira: JiraConfig;
@@ -112,6 +113,7 @@ export function loadConfig(): AppConfig {
     stateDir: optional('STATE_DIR', './state'),
     workerCount: readWorkerCount(),
     recheckIntervalSeconds: Number(optional('RECHECK_INTERVAL_SECONDS', '60')),
+    maxWaitMinutes: Number(optional('MAX_WAIT_MINUTES', '720')),
     github: {
       apiUrl: optional('GITHUB_API_URL', 'https://api.github.com'),
       appId: required('GITHUB_APP_ID'),
