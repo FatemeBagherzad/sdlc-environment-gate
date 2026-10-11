@@ -10,21 +10,22 @@ async function checkOne(
   store: PendingStore,
   claimed: ClaimedItem
 ): Promise<void> {
-  const decision = await evaluateRequest(
-    config,
-    backend,
-    claimed.item.request,
-    new Date(claimed.item.firstSeenAt),
-    claimed.item.lastMessage
-  );
+  const reportsSoFar = claimed.item.statusReports || 0;
 
-  if (decision.type !== 'wait') {
+  const result = await evaluateRequest(config, backend, claimed.item.request, {
+    waitingSince: new Date(claimed.item.firstSeenAt),
+    lastSummary: claimed.item.lastMessage,
+    statusReportsSent: reportsSoFar
+  });
+
+  if (result.decision.type !== 'wait') {
     store.finish(claimed);
     return;
   }
 
   claimed.item.lastCheckedAt = new Date().toISOString();
-  claimed.item.lastMessage = decision.summary;
+  claimed.item.lastMessage = result.decision.summary;
+  claimed.item.statusReports = reportsSoFar + (result.statusReportSent ? 1 : 0);
   store.putBack(claimed);
 }
 

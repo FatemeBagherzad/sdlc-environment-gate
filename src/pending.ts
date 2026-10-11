@@ -7,6 +7,8 @@ export interface PendingItem {
   firstSeenAt: string;
   lastCheckedAt: string;
   lastMessage: string;
+  // how many status reports we already put on this deployment
+  statusReports?: number;
 }
 
 export interface ClaimedItem {
@@ -36,6 +38,22 @@ export class PendingStore {
     const target = path.join(this.waitingDir, fileName);
 
     fs.writeFileSync(target, JSON.stringify(item, null, 2));
+  }
+
+  read(request: ApprovalRequest): PendingItem | null {
+    const fileName = fileNameFor(request);
+
+    for (const folder of [this.waitingDir, this.workingDir]) {
+      try {
+        const content = fs.readFileSync(path.join(folder, fileName), 'utf8');
+
+        return JSON.parse(content) as PendingItem;
+      } catch (error) {
+        // not in this folder, try the next one
+      }
+    }
+
+    return null;
   }
 
   remove(request: ApprovalRequest): void {

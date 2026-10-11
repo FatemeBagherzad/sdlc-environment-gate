@@ -37,3 +37,22 @@ export async function sendDecision(
     comment: short
   });
 }
+
+// Leaving the state out of the call decides nothing, it only puts a status
+// report on the pending deployment so the run shows why it is waiting. Github
+// takes at most ten of these for one deployment.
+export async function sendStatusReport(
+  client: AxiosInstance,
+  request: ApprovalRequest,
+  comment: string
+): Promise<void> {
+  await client.post(request.callbackUrl, {
+    environment_name: request.environment,
+    comment: shorten(comment)
+  });
+
+  logger.info('status report sent to github', {
+    environment: request.environment,
+    runId: request.runId
+  });
+}

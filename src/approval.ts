@@ -1,7 +1,7 @@
 import { AppConfig } from './config';
 import { TicketBackend } from './backends/backend';
 import { PendingStore } from './pending';
-import { evaluateRequest } from './evaluate';
+import { evaluateAndRemember } from './evaluate';
 import { ApprovalRequest } from './types';
 import { logger } from './logger';
 
@@ -62,21 +62,7 @@ export async function handleProtectionRuleEvent(
     runId: request.runId
   });
 
-  const decision = await evaluateRequest(config, backend, request, new Date(), '');
-
-  if (decision.type !== 'wait') {
-    store.remove(request);
-    return;
-  }
-
-  // nothing is sent to github for a wait, the deployment stays pending there
-  // and we keep the ticket so it can be looked at again
-  const stamp = new Date().toISOString();
-
-  store.save({
-    request: request,
-    firstSeenAt: stamp,
-    lastCheckedAt: stamp,
-    lastMessage: decision.summary
-  });
+  // nothing is sent to github for a wait, the deployment stays pending there and
+  // the file keeps it so it can be looked at again
+  await evaluateAndRemember(config, backend, store, request);
 }
