@@ -41,6 +41,7 @@ export interface AppConfig {
   workerCount: number;
   recheckIntervalSeconds: number;
   maxWaitMinutes: number;
+  postPullRequestComment: boolean;
   github: GithubConfig;
   local: LocalConfig;
   jira: JiraConfig;
@@ -114,6 +115,7 @@ export function loadConfig(): AppConfig {
     workerCount: readWorkerCount(),
     recheckIntervalSeconds: Number(optional('RECHECK_INTERVAL_SECONDS', '60')),
     maxWaitMinutes: Number(optional('MAX_WAIT_MINUTES', '720')),
+    postPullRequestComment: optional('POST_PULL_REQUEST_COMMENT', 'true') === 'true',
     github: {
       apiUrl: optional('GITHUB_API_URL', 'https://api.github.com'),
       appId: required('GITHUB_APP_ID'),

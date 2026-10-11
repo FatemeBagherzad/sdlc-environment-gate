@@ -3,6 +3,7 @@ import { TicketBackend } from './backends/backend';
 import { createInstallationClient } from './github/client';
 import { collectTextSources } from './github/sources';
 import { sendDecision } from './github/callback';
+import { postPullRequestComment } from './github/comment';
 import { findTicketReference } from './tickets';
 import { decide } from './decision';
 import { ApprovalRequest, Decision } from './types';
@@ -23,7 +24,8 @@ export async function evaluateRequest(
   config: AppConfig,
   backend: TicketBackend,
   request: ApprovalRequest,
-  waitingSince: Date
+  waitingSince: Date,
+  lastSummary: string
 ): Promise<Decision> {
   const client = await createInstallationClient(config.github, request.installationId);
   const sources = await collectTextSources(client, request);
@@ -65,6 +67,14 @@ export async function evaluateRequest(
 
   if (decision.type === 'reject') {
     await sendDecision(client, request, 'rejected', decision.summary);
+  }
+
+  // on a wait this runs every minute, so the comment is only written when
+  // something actually changed
+  if (config.postPullRequestComment && decision.summary !== lastSummary) {
+    const body = '**Environment `' + request.environment + '`**\n\n' + decision.detail;
+
+    await postPullRequestComment(client, request, body);
   }
 
   return decision;

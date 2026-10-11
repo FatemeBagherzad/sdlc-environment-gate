@@ -14,7 +14,8 @@ async function checkOne(
     config,
     backend,
     claimed.item.request,
-    new Date(claimed.item.firstSeenAt)
+    new Date(claimed.item.firstSeenAt),
+    claimed.item.lastMessage
   );
 
   if (decision.type !== 'wait') {
