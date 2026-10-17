@@ -1,0 +1,20 @@
+services:
+  approval-app:
+    build: .
+    image: env-approval-app:dev
+    ports:
+      - "3000:3000"
+    environment:
+      PORT: "3000"
+      BACKEND_MODE: local
+      LOCAL_TICKETS_PATH: /app/tickets
+      STATE_DIR: /app/state
+      RECHECK_INTERVAL_SECONDS: "30"
+      MAX_WAIT_MINUTES: "120"
+      WORKER_COUNT: "2"
+      GITHUB_APP_ID: "${GITHUB_APP_ID}"
+      GITHUB_PRIVATE_KEY: "${GITHUB_PRIVATE_KEY}"
+      GITHUB_WEBHOOK_SECRET: "${GITHUB_WEBHOOK_SECRET}"
+    volumes:
+      - ./tickets:/app/tickets
+      - ./state:/app/state
