@@ -5,11 +5,22 @@ dotenv.config();
 
 export type BackendMode = 'local' | 'jira' | 'servicenow';
 
+// webhook: github calls us when a deployment is waiting
+// poll: we ask github ourselves, for when github cannot reach the app
+// both: the webhook answers fast and the poller picks up what it missed
+export type DiscoveryMode = 'webhook' | 'poll' | 'both';
+
 export interface GithubConfig {
   apiUrl: string;
   appId: string;
   privateKey: string;
   webhookSecret: string;
+}
+
+export interface PollConfig {
+  organization: string;
+  intervalSeconds: number;
+  repositories: string[];
 }
 
 export interface LocalConfig {
@@ -37,12 +48,14 @@ export interface ServiceNowConfig {
 export interface AppConfig {
   port: number;
   backendMode: BackendMode;
+  discoveryMode: DiscoveryMode;
   stateDir: string;
   workerCount: number;
   recheckIntervalSeconds: number;
   maxWaitMinutes: number;
   postPullRequestComment: boolean;
   github: GithubConfig;
+  poll: PollConfig;
   local: LocalConfig;
   jira: JiraConfig;
   serviceNow: ServiceNowConfig;
@@ -107,10 +120,32 @@ function readBackendMode(): BackendMode {
   throw new Error('BACKEND_MODE has to be local, jira or servicenow');
 }
 
+function readDiscoveryMode(): DiscoveryMode {
+  const value = optional('DISCOVERY_MODE', 'webhook').toLowerCase();
+
+  if (value === 'webhook' || value === 'poll' || value === 'both') {
+    return value;
+  }
+
+  throw new Error('DISCOVERY_MODE has to be webhook, poll or both');
+}
+
+function checkConfig(config: AppConfig): void {
+  // in the polling mode there is no webhook at all, so the secret is not needed
+  if (config.discoveryMode !== 'poll' && !config.github.webhookSecret) {
+    throw new Error('GITHUB_WEBHOOK_SECRET is needed when DISCOVERY_MODE is webhook or both');
+  }
+
+  if (config.discoveryMode !== 'webhook' && !config.poll.organization) {
+    throw new Error('GITHUB_ORG is needed when DISCOVERY_MODE is poll or both');
+  }
+}
+
 export function loadConfig(): AppConfig {
-  return {
+  const config: AppConfig = {
     port: Number(optional('PORT', '3000')),
     backendMode: readBackendMode(),
+    discoveryMode: readDiscoveryMode(),
     stateDir: optional('STATE_DIR', './state'),
     workerCount: readWorkerCount(),
     recheckIntervalSeconds: Number(optional('RECHECK_INTERVAL_SECONDS', '60')),
@@ -120,7 +155,12 @@ export function loadConfig(): AppConfig {
       apiUrl: optional('GITHUB_API_URL', 'https://api.github.com'),
       appId: required('GITHUB_APP_ID'),
       privateKey: decodePrivateKey(required('GITHUB_PRIVATE_KEY')),
-      webhookSecret: required('GITHUB_WEBHOOK_SECRET')
+      webhookSecret: optional('GITHUB_WEBHOOK_SECRET', '')
+    },
+    poll: {
+      organization: optional('GITHUB_ORG', ''),
+      intervalSeconds: Number(optional('POLL_INTERVAL_SECONDS', '60')),
+      repositories: readList('POLL_REPOSITORIES', '')
     },
     local: {
       ticketsPath: optional('LOCAL_TICKETS_PATH', './tickets')
@@ -142,4 +182,8 @@ export function loadConfig(): AppConfig {
       rejectedStates: readList('SERVICENOW_REJECTED_STATES', 'canceled,cancelled,closed')
     }
   };
+
+  checkConfig(config);
+
+  return config;
 }
