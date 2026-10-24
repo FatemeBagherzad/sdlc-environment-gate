@@ -5,7 +5,7 @@ import { createInstallationClient } from './github/client';
 import { findOrganizationInstallation, listInstallationRepositories, RepositoryName } from './github/installations';
 import { findWaitingDeployments, WaitingDeployment } from './github/waiting';
 import { findPullRequestNumbers } from './github/pulls';
-import { evaluateRequest } from './evaluate';
+import { evaluateAndRemember } from './evaluate';
 import { PendingStore } from './pending';
 import { ApprovalRequest } from './types';
 import { logger } from './logger';
@@ -73,25 +73,10 @@ async function handleOne(
     )
   };
 
-  const result = await evaluateRequest(config, backend, request, {
-    waitingSince: new Date(),
-    lastSummary: '',
-    statusReportsSent: 0
-  });
-
-  if (result.decision.type !== 'wait') {
-    store.remove(request);
-    return;
-  }
-
-  const stamp = new Date().toISOString();
-
-  store.save({
-    request: request,
-    firstSeenAt: stamp,
-    lastCheckedAt: stamp,
-    lastMessage: result.decision.summary
-  });
+  // The poller sees the same deployment on every round, so the first time we saw
+  // it has to come out of the store. Otherwise MAX_WAIT_MINUTES is never reached
+  // and the same comment is written again and again.
+  await evaluateAndRemember(config, backend, store, request);
 }
 
 async function pollOnce(

@@ -110,8 +110,8 @@ export async function evaluateRequest(
   return { decision: decision, statusReportSent: statusReportSent };
 }
 
-// Used by the webhook. The scheduler cannot use it because it already holds the
-// file of the deployment.
+// Used by the webhook and by the poller. The scheduler cannot use it because it
+// already holds the file of the deployment.
 export async function evaluateAndRemember(
   config: AppConfig,
   backend: TicketBackend,
