@@ -4,6 +4,7 @@ import { createBackend } from './backends';
 import { PendingStore } from './pending';
 import { createServer } from './server';
 import { startScheduler } from './scheduler';
+import { startPoller } from './poller';
 import { logger } from './logger';
 
 const config = loadConfig();
@@ -21,9 +22,16 @@ function startPrimary(): void {
     logger.info('deployments picked up from the last run', { count: recovered });
   }
 
+  // Only the primary polls github. It serves no http traffic and there is only
+  // one of it, so two workers can never approve the same deployment.
+  if (config.discoveryMode !== 'webhook') {
+    startPoller(config, createBackend(config), store);
+  }
+
   logger.info('starting workers', {
     workers: config.workerCount,
-    mode: config.backendMode
+    mode: config.backendMode,
+    discovery: config.discoveryMode
   });
 
   for (let number = 0; number < config.workerCount; number++) {
@@ -52,7 +60,11 @@ function startWorker(): void {
     logger.info('worker is listening', { port: config.port });
   });
 
-  startScheduler(config, backend, store);
+  // the poller already looks at the waiting deployments again, so in the polling
+  // modes the scheduler would only do the same work twice
+  if (config.discoveryMode === 'webhook') {
+    startScheduler(config, backend, store);
+  }
 }
 
 if (cluster.isPrimary) {
