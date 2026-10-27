@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.fullname }}
+  labels:
+    app: {{ .Values.fullname }}
+data:
+  PORT: "{{ .Values.app.port }}"
+  BACKEND_MODE: "{{ .Values.app.backendMode }}"
+  DISCOVERY_MODE: "{{ .Values.app.discoveryMode }}"
+  WORKER_COUNT: "{{ .Values.app.workerCount }}"
+  RECHECK_INTERVAL_SECONDS: "{{ .Values.app.recheckIntervalSeconds }}"
+  MAX_WAIT_MINUTES: "{{ .Values.app.maxWaitMinutes }}"
+  POST_PULL_REQUEST_COMMENT: "{{ .Values.app.postPullRequestComment }}"
+  STATE_DIR: "{{ .Values.app.stateDir }}"
+  GITHUB_API_URL: "{{ .Values.github.apiUrl }}"
+  GITHUB_ORG: "{{ .Values.github.organization }}"
+  POLL_INTERVAL_SECONDS: "{{ .Values.poll.intervalSeconds }}"
+  POLL_REPOSITORIES: "{{ .Values.poll.repositories }}"
+  LOCAL_TICKETS_PATH: "{{ .Values.local.ticketsPath }}"
+  JIRA_BASE_URL: "{{ .Values.jira.baseUrl }}"
+  JIRA_APPROVED_STATUSES: "{{ .Values.jira.approvedStatuses }}"
+  JIRA_REJECTED_STATUSES: "{{ .Values.jira.rejectedStatuses }}"
+  JIRA_WINDOW_START_FIELD: "{{ .Values.jira.windowStartField }}"
+  JIRA_WINDOW_END_FIELD: "{{ .Values.jira.windowEndField }}"
+  SERVICENOW_BASE_URL: "{{ .Values.serviceNow.baseUrl }}"
+  SERVICENOW_APPROVED_STATES: "{{ .Values.serviceNow.approvedStates }}"
+  SERVICENOW_REJECTED_STATES: "{{ .Values.serviceNow.rejectedStates }}"

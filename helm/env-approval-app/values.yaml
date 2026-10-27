@@ -1,0 +1,64 @@
+fullname: env-approval-app
+
+replicaCount: 1
+
+image:
+  repository: ghcr.io/example/env-approval-app
+  tag: "0.1.0"
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+
+service:
+  type: ClusterIP
+  port: 80
+
+app:
+  port: 3000
+  backendMode: local
+  discoveryMode: webhook
+  workerCount: 0
+  recheckIntervalSeconds: 60
+  maxWaitMinutes: 720
+  postPullRequestComment: true
+  stateDir: /app/state
+
+github:
+  apiUrl: https://api.github.com
+  organization: ""
+
+poll:
+  intervalSeconds: 60
+  repositories: ""
+
+jira:
+  baseUrl: ""
+  approvedStatuses: "approved"
+  rejectedStatuses: "rejected,cancelled"
+  windowStartField: ""
+  windowEndField: duedate
+
+serviceNow:
+  baseUrl: ""
+  approvedStates: "scheduled,implement"
+  rejectedStates: "canceled,cancelled,closed"
+
+local:
+  ticketsPath: /app/tickets
+
+secrets:
+  githubAppId: ""
+  githubPrivateKey: ""
+  githubWebhookSecret: ""
+  jiraEmail: ""
+  jiraApiToken: ""
+  serviceNowUsername: ""
+  serviceNowPassword: ""
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
