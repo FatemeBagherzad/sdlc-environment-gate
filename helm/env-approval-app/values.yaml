@@ -46,6 +46,14 @@ serviceNow:
 local:
   ticketsPath: /app/tickets
 
+# Every value here is base64 and nothing else, that is how kubernetes wants it
+# in the data part of a secret. Make them like this:
+#
+#   echo -n "123456" | base64 -w0
+#   base64 -w0 my-github-app.private-key.pem
+#
+# Only fill in what the backend you picked needs. Do not commit a values file
+# that has these filled in, pass them with --set or with a file next to it.
 secrets:
   githubAppId: ""
   githubPrivateKey: ""

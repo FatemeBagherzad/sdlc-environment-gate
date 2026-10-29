@@ -1,0 +1,24 @@
+# Copy this, fill it in and install with:
+#   helm install approval ./helm/env-approval-app -f my-values.yaml
+
+image:
+  repository: ghcr.io/example/env-approval-app
+  tag: "0.1.0"
+
+app:
+  backendMode: servicenow
+  discoveryMode: poll
+
+github:
+  organization: mycompany
+
+serviceNow:
+  baseUrl: https://dev12345.service-now.com
+
+secrets:
+  # echo -n "123456" | base64 -w0
+  githubAppId: MTIzNDU2
+  # base64 -w0 my-github-app.private-key.pem
+  githubPrivateKey: LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQo...
+  serviceNowUsername: YWRtaW4=
+  serviceNowPassword: c3VwZXItc2VjcmV0
