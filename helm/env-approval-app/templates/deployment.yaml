@@ -13,6 +13,10 @@ spec:
     metadata:
       labels:
         app: {{ .Values.fullname }}
+      {{- if .Values.podAnnotations }}
+      annotations:
+        {{- toYaml .Values.podAnnotations | nindent 8 }}
+      {{- end }}
     spec:
       {{- if .Values.imagePullSecrets }}
       imagePullSecrets:
@@ -30,11 +34,36 @@ spec:
                 name: {{ .Values.fullname }}
             - secretRef:
                 name: {{ .Values.fullname }}
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 20
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
           volumeMounts:
             - name: state
               mountPath: {{ .Values.app.stateDir }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+      {{- if .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml .Values.nodeSelector | nindent 8 }}
+      {{- end }}
+      {{- if .Values.tolerations }}
+      tolerations:
+        {{- toYaml .Values.tolerations | nindent 8 }}
+      {{- end }}
       volumes:
         - name: state
+          {{- if .Values.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ .Values.fullname }}
+          {{- else }}
           emptyDir: {}
+          {{- end }}

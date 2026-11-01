@@ -13,6 +13,21 @@ service:
   type: ClusterIP
   port: 80
 
+ingress:
+  enabled: false
+  className: nginx
+  host: approval.example.com
+  path: /
+  annotations: {}
+  tls:
+    enabled: false
+    secretName: ""
+
+persistence:
+  enabled: true
+  size: 1Gi
+  storageClass: ""
+
 app:
   port: 3000
   backendMode: local
@@ -70,3 +85,7 @@ resources:
   limits:
     cpu: 500m
     memory: 512Mi
+
+podAnnotations: {}
+nodeSelector: {}
+tolerations: []
