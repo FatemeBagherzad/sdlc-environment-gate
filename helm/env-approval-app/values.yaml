@@ -1,64 +1,117 @@
+# Name used for all the objects of this chart. Change it if you want to run the
+# app two times in the same namespace.
 fullname: env-approval-app
 
+# How many pods. One is enough, the app starts its own workers inside the pod.
 replicaCount: 1
 
 image:
+  # where your image is pushed
   repository: ghcr.io/example/env-approval-app
+  # use a real tag, latest make the rollback very hard
   tag: "0.1.0"
   pullPolicy: IfNotPresent
 
+# only needed when the registry is private
 imagePullSecrets: []
 
 service:
   type: ClusterIP
+  # port of the service, the container itself listen on app.port
   port: 80
 
 ingress:
+  # Turn this on only when github must reach the app, so for the webhook mode.
+  # In the poll mode you dont need any ingress.
   enabled: false
   className: nginx
+  # the dns name github will call
   host: approval.example.com
   path: /
+  # extra annotations for your ingress controller, for example cert-manager
   annotations: {}
   tls:
     enabled: false
+    # name of the kubernetes secret that holds the certificate
     secretName: ""
 
+# The deployments that are waiting for their window are files on disk. With an
+# empty dir they are lost when the pod restart and those deployments stay
+# pending in github until somebody cancel them.
 persistence:
   enabled: true
   size: 1Gi
+  # empty means the default storage class of the cluster
   storageClass: ""
 
 app:
+  # port inside the container
   port: 3000
+  # where the change ticket is checked: local, jira or servicenow
   backendMode: local
+  # How the app find out that a deployment is waiting:
+  #   webhook = github calls the app, so github need to reach us
+  #   poll    = the app asks github, so nothing need to reach us
+  #   both    = the webhook is fast and the poller catch what was missed
   discoveryMode: webhook
+  # How many worker processes inside the pod. 0 means one per cpu, four maximum.
   workerCount: 0
+  # Only used in the webhook mode: how often a waiting deployment is looked at
+  # again.
   recheckIntervalSeconds: 60
+  # After this many minutes the app stop waiting and reject the deployment.
+  # 720 is 12 hours.
   maxWaitMinutes: 720
+  # write the long explanation as a comment on the pull request
   postPullRequestComment: true
+  # Folder for the waiting deployments. It must be the same path the volume is
+  # mounted on.
   stateDir: /app/state
 
 github:
+  # For github enterprise server put your own api here, for example
+  # https://github.mycompany.com/api/v3
   apiUrl: https://api.github.com
+  # The organisation the app is installed on. Only needed when discoveryMode is
+  # poll or both. A personal account name also works.
   organization: ""
 
 poll:
+  # How often the app asks github for the waiting runs. A bigger number is less
+  # api calls but the deployment start later.
   intervalSeconds: 60
+  # Comma seperated repository names, for example "web,api". Empty means every
+  # repository the app is installed on, and that cost more api calls.
   repositories: ""
 
 jira:
+  # your jira address, no slash at the end
   baseUrl: ""
+  # The status names that mean the ticket is approved, comma seperated. On a
+  # free jira there is no approval field, the status is the approval.
   approvedStatuses: "approved"
+  # the status names that mean the ticket is refused
   rejectedStatuses: "rejected,cancelled"
+  # A date field with the start of the window. Empty means no start, because a
+  # free jira has no planned start field.
   windowStartField: ""
+  # The field with the end of the window. The due date is on every plan, a
+  # custom field like customfield_10051 also works.
   windowEndField: duedate
 
 serviceNow:
+  # your instance, no slash at the end. a free developer instance looks like
+  # https://dev12345.service-now.com
   baseUrl: ""
+  # the change states where a deployment is allowed to run
   approvedStates: "scheduled,implement"
+  # The change states that reject the deployment at once. Watch the spelling,
+  # some instances write Canceled with one l, so both are here.
   rejectedStates: "canceled,cancelled,closed"
 
 local:
+  # Folder with the ticket files. Only for testing, and you have to mount it
+  # yourself.
   ticketsPath: /app/tickets
 
 # Every value here is base64 and nothing else, that is how kubernetes wants it
@@ -70,14 +123,23 @@ local:
 # Only fill in what the backend you picked needs. Do not commit a values file
 # that has these filled in, pass them with --set or with a file next to it.
 secrets:
+  # the app id from the github app page
   githubAppId: ""
+  # the private key pem file of the github app
   githubPrivateKey: ""
+  # The same secret you typed in the webhook of the github app. Not needed when
+  # discoveryMode is poll.
   githubWebhookSecret: ""
+  # the user the jira api token belong to
   jiraEmail: ""
+  # the jira api token
   jiraApiToken: ""
+  # a servicenow user that can read the change_request table
   serviceNowUsername: ""
   serviceNowPassword: ""
 
+# The app is not heavy, most of the time it only wait for jira or servicenow to
+# answer.
 resources:
   requests:
     cpu: 100m
@@ -86,6 +148,7 @@ resources:
     cpu: 500m
     memory: 512Mi
 
+# extra annotations on the pod, for example for your metrics scraper
 podAnnotations: {}
 nodeSelector: {}
 tolerations: []
