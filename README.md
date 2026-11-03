@@ -8,6 +8,30 @@ it pending until the approved time window starts.
 
 There are three backends: `local`, `jira` and `servicenow`.
 
+## Which plans this works with
+
+**This app is written for the free plans of GitHub, Jira and ServiceNow, and it
+only uses API that those plans give you.** Nothing in here needs a paid Jira, a
+paid ServiceNow plugin or GitHub Enterprise. That is on purpose, so that one
+person can run the whole thing end to end without paying for anything.
+
+The other side of that is what it does not do. The app does **not** support the
+enterprise features of any of the three, and there is no half way support for
+them either. If you are on a paid plan and you want the change management of
+Jira Service Management, a real approval record, an approval API, a scoped
+ServiceNow API or a protection rule on a private repository, you have to add
+that yourself. It is not in here and it is not planned.
+
+| product | written for | what that means here |
+| --- | --- | --- |
+| GitHub | Free plan, **public** repository | A custom deployment protection rule from a GitHub app only works on a public repository on the Free plan. A private or internal repository needs GitHub Enterprise, which this app does not cover. Everything else, the Actions API and the protection rule API, is the same on every plan. |
+| Jira | Jira Cloud Free, up to 10 users | The approval is the **workflow status** of the issue, and the window end is the **due date** or a date field you create yourself. Jira Service Management change management, with its planned start and planned end fields, moved to the Premium plan, so it is not used and not read. |
+| ServiceNow | free Personal Developer Instance | Only the **table API** and the base `change_request` table, with the `approval`, `state`, `start_date` and `end_date` fields that every instance has. No plugins, no scripted REST API, no flow designer. |
+
+Authentication is the plain kind everywhere, because that is what the free plans
+hand out: a GitHub app private key, a Jira email plus API token, and a
+ServiceNow user and password.
+
 ## How a deployment is judged
 
 | what the app finds | what it does |
@@ -326,6 +350,87 @@ no ingress at all.
 waiting deployments. With an empty dir instead, a pod restart loses the
 deployments that were waiting and they stay pending in GitHub until somebody
 cancels them.
+
+## Trying it against the real free services
+
+You can get all three for nothing, as one person.
+
+**ServiceNow.** Sign up at the ServiceNow developer site and ask for a Personal
+Developer Instance. You get a whole instance with an admin user, the table API
+turned on and `change_request` already there, which is everything this app
+touches. The instance is taken back if you do not log into it for a while, so log
+in every week or so and export anything you want to keep. Then:
+
+```
+BACKEND_MODE=servicenow
+SERVICENOW_BASE_URL=https://dev12345.service-now.com
+SERVICENOW_USERNAME=admin
+SERVICENOW_PASSWORD=...
+```
+
+Open a change request, set its state and approval, and run a workflow with its
+number in the commit message. Check your own choice labels first, the state names
+are not the same on every version.
+
+**Jira.** Make a free Jira Cloud site and an API token under your Atlassian
+account. In a project, rename or add a workflow status called `Approved`, and use
+the due date of the issue as the end of the window. You do not need any custom
+field for that. If you want a real start and end time, make two date time custom
+fields and put their ids in `JIRA_WINDOW_START_FIELD` and
+`JIRA_WINDOW_END_FIELD`.
+
+```
+BACKEND_MODE=jira
+JIRA_BASE_URL=https://mysite.atlassian.net
+JIRA_EMAIL=me@example.com
+JIRA_API_TOKEN=...
+```
+
+**GitHub.** Use a **public** repository, that is the part that matters on the
+Free plan. Add an environment, add this app as a deployment protection rule, and
+run a workflow that uses the environment. With `DISCOVERY_MODE=poll` you do not
+need a public address or a tunnel for the app itself, your laptop is enough.
+
+## Trying it out with the local backend
+
+The quickest way to see all the cases without any account at all.
+
+1. Run the app with:
+
+   ```
+   BACKEND_MODE=local
+   LOCAL_TICKETS_PATH=./tickets
+   RECHECK_INTERVAL_SECONDS=30
+   ```
+
+2. **No ticket.** Push a commit with a message like `fix the login page`. The run
+   reaches the environment and is rejected right away with *No change ticket
+   number was found for this deployment.*
+
+3. **A ticket that does not exist.** Push `CHG0099999 try the deployment`. It is
+   rejected with *Change ticket CHG0099999 does not exist in the local ticket
+   folder.*
+
+4. **An approved ticket.** Put `status: approved` in `tickets/CHG0045123.txt` and
+   push `CHG0045123 deploy the worker`. The deployment goes through and the
+   comment says which file the answer came from.
+
+5. **Not approved yet.** Use `status: awaiting approval` with a `window_end` far
+   in the future. The run stays pending and the deployment itself shows why.
+   Change the file to `status: approved` and within
+   `RECHECK_INTERVAL_SECONDS` the deployment continues on its own, no new run
+   needed.
+
+6. **Denied.** `status: denied` rejects with the state in the message.
+
+7. **Window has not started.** `status: approved` with a `window_start` in an
+   hour keeps the run pending until the window opens.
+
+8. **Window is over.** `status: approved` with a window that ended yesterday is
+   rejected with *The approval window of ... ended at ...*.
+
+`kubectl logs` or `docker compose logs` show one JSON line per decision with the
+full reason in it.
 
 ## How it runs
 
