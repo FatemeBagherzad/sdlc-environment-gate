@@ -207,6 +207,7 @@ your own instance before you trust it. The user only needs read access to the
 | variable | default | what it is |
 | --- | --- | --- |
 | `PORT` | `3000` | port the app listens on |
+| `LOG_LEVEL` | `info` | `debug`, `info`, `warn` or `error` |
 | `BACKEND_MODE` | `local` | `local`, `jira` or `servicenow` |
 | `DISCOVERY_MODE` | `webhook` | `webhook`, `poll` or `both` |
 | `WORKER_COUNT` | `0` | number of worker processes, `0` means one per CPU up to four |

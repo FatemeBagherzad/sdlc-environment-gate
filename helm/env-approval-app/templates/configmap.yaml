@@ -6,6 +6,7 @@ metadata:
     app: {{ .Values.fullname }}
 data:
   PORT: "{{ .Values.app.port }}"
+  LOG_LEVEL: "{{ .Values.app.logLevel }}"
   BACKEND_MODE: "{{ .Values.app.backendMode }}"
   DISCOVERY_MODE: "{{ .Values.app.discoveryMode }}"
   WORKER_COUNT: "{{ .Values.app.workerCount }}"

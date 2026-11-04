@@ -9,7 +9,7 @@ image:
   # where your image is pushed
   repository: ghcr.io/example/env-approval-app
   # use a real tag, latest make the rollback very hard
-  tag: "0.1.0"
+  tag: "1.0.0"
   pullPolicy: IfNotPresent
 
 # only needed when the registry is private
@@ -47,6 +47,8 @@ persistence:
 app:
   # port inside the container
   port: 3000
+  # debug, info, warn or error. debug is very noisy.
+  logLevel: info
   # where the change ticket is checked: local, jira or servicenow
   backendMode: local
   # How the app find out that a deployment is waiting:
