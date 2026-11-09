@@ -1,0 +1,26 @@
+name: helm
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  helm:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: azure/setup-helm@v4
+        with:
+          version: v3.16.4
+
+      - run: helm lint ./helm/env-approval-app
+      - run: helm lint ./helm/env-approval-app -f ./helm/env-approval-app/values-example.yaml
+
+      # render it with the defaults and with the poll mode, a broken template
+      # fails here instead of on the cluster
+      - run: helm template approval ./helm/env-approval-app > /dev/null
+      - run: helm template approval ./helm/env-approval-app --set app.discoveryMode=poll --set github.organization=example > /dev/null
+      - run: helm template approval ./helm/env-approval-app --set ingress.enabled=true > /dev/null
