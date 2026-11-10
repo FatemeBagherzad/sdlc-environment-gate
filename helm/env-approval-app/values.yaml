@@ -20,6 +20,10 @@ service:
   # port of the service, the container itself listen on app.port
   port: 80
 
+# Used by "helm test", it only needs something that has curl in it.
+tests:
+  image: curlimages/curl:8.11.1
+
 ingress:
   # Turn this on only when github must reach the app, so for the webhook mode.
   # In the poll mode you dont need any ingress.
