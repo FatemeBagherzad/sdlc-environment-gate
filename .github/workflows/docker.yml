@@ -1,0 +1,16 @@
+name: docker
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # only building it, pushing is done by hand for now
+      - run: docker build -t env-approval-app:ci .
