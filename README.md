@@ -308,6 +308,31 @@ With Docker Compose, which mounts `tickets/` and `state/` from the repository:
 docker compose up --build
 ```
 
+## Tests and CI
+
+`npm test` runs the unit tests. There are three workflows in
+`.github/workflows`, all of them run on a push to `main` and on every pull
+request:
+
+- `test.yml` builds the app and runs the unit tests
+- `helm.yml` lints the chart and renders it with the defaults, with the poll
+  mode and with the ingress on
+- `docker.yml` builds the image
+
+The chart has a test of its own. After it is installed, this starts a small pod
+that calls `/health` in the cluster:
+
+```bash
+helm test approval
+```
+
+## Example workflow
+
+`examples/deployment-workflow.yml` is a workflow for the repository you want to
+protect, not for this one. Copy it into `.github/workflows/` over there, put the
+change ticket number in the commit message, and the job will wait for this app
+before its first step runs.
+
 ## Deploying with Helm
 
 The chart is in `helm/env-approval-app`.

@@ -1,0 +1,26 @@
+# This one does not belong to this repository. Copy it into
+# .github/workflows/ of the repository you want to protect.
+#
+# The environment has to have this app turned on as a deployment protection
+# rule, see the README. The job then stops before the first step and waits
+# until the change ticket is approved and inside its window.
+#
+# Put the ticket number in the commit message, like:
+#   git commit -m "CHG0045123 deploy the new worker"
+
+name: deploy
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: deploy
+        run: ./deploy.sh
