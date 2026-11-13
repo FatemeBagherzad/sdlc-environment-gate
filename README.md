@@ -94,6 +94,9 @@ That one is rejected, and the run says no change ticket number was found. Put
 `window_start` an hour from now into the ticket file and push again, and the run
 will sit and wait instead, until the window opens.
 
+The app writes one JSON line per decision with the whole reason in it, so the
+terminal you started it in tells you what it did and why.
+
 ### When that works, point it at the real thing
 
 Only the backend values change, nothing else. ServiceNow, on a free personal
@@ -546,26 +549,20 @@ waiting deployments. With an empty dir instead, a pod restart loses the
 deployments that were waiting and they stay pending in GitHub until somebody
 cancels them.
 
-## Trying it against the real free services
+## Getting the free accounts
 
-You can get all three for nothing, as one person.
+You can get all three for nothing, as one person. The values that go into the
+configuration are in the quick start and in the backends section above, this is
+only about getting the accounts into a usable state.
 
 **ServiceNow.** Sign up at the ServiceNow developer site and ask for a Personal
 Developer Instance. You get a whole instance with an admin user, the table API
 turned on and `change_request` already there, which is everything this app
 touches. The instance is taken back if you do not log into it for a while, so log
-in every week or so and export anything you want to keep. Then:
-
-```
-BACKEND_MODE=servicenow
-SERVICENOW_BASE_URL=https://dev12345.service-now.com
-SERVICENOW_USERNAME=admin
-SERVICENOW_PASSWORD=...
-```
-
-Open a change request, set its state and approval, and run a workflow with its
-number in the commit message. Check your own choice labels first, the state names
-are not the same on every version.
+in every week or so and export anything you want to keep. Open a change request,
+set its state and its approval, and check the choice labels on your own instance
+before you trust `SERVICENOW_APPROVED_STATES`, the state names are not the same
+on every version.
 
 **Jira.** Make a free Jira Cloud site and an API token under your Atlassian
 account. In a project, rename or add a workflow status called `Approved`, and use
@@ -574,58 +571,9 @@ field for that. If you want a real start and end time, make two date time custom
 fields and put their ids in `JIRA_WINDOW_START_FIELD` and
 `JIRA_WINDOW_END_FIELD`.
 
-```
-BACKEND_MODE=jira
-JIRA_BASE_URL=https://mysite.atlassian.net
-JIRA_EMAIL=me@example.com
-JIRA_API_TOKEN=...
-```
-
 **GitHub.** Use a **public** repository, that is the part that matters on the
-Free plan. Add an environment, add this app as a deployment protection rule, and
-run a workflow that uses the environment. With `DISCOVERY_MODE=poll` you do not
-need a public address or a tunnel for the app itself, your laptop is enough.
-
-## Trying it out with the local backend
-
-The quickest way to see all the cases without any account at all.
-
-1. Run the app with:
-
-   ```
-   BACKEND_MODE=local
-   LOCAL_TICKETS_PATH=./tickets
-   RECHECK_INTERVAL_SECONDS=30
-   ```
-
-2. **No ticket.** Push a commit with a message like `fix the login page`. The run
-   reaches the environment and is rejected right away with *No change ticket
-   number was found for this deployment.*
-
-3. **A ticket that does not exist.** Push `CHG0099999 try the deployment`. It is
-   rejected with *Change ticket CHG0099999 does not exist in the local ticket
-   folder.*
-
-4. **An approved ticket.** Put `status: approved` in `tickets/CHG0045123.txt` and
-   push `CHG0045123 deploy the worker`. The deployment goes through and the
-   comment says which file the answer came from.
-
-5. **Not approved yet.** Use `status: awaiting approval` with a `window_end` far
-   in the future. The run stays pending and the deployment itself shows why.
-   Change the file to `status: approved` and within
-   `RECHECK_INTERVAL_SECONDS` the deployment continues on its own, no new run
-   needed.
-
-6. **Denied.** `status: denied` rejects with the state in the message.
-
-7. **Window has not started.** `status: approved` with a `window_start` in an
-   hour keeps the run pending until the window opens.
-
-8. **Window is over.** `status: approved` with a window that ended yesterday is
-   rejected with *The approval window of ... ended at ...*.
-
-`kubectl logs` or `docker compose logs` show one JSON line per decision with the
-full reason in it.
+Free plan. With `DISCOVERY_MODE=poll` you need no public address and no tunnel
+for the app itself, your laptop is enough.
 
 ## How it runs
 
