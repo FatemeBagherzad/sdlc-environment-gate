@@ -118,6 +118,65 @@ JIRA_APPROVED_STATUSES=approved
 
 The rest of this README is the detail behind those values.
 
+## Where this sits in the change process
+
+This app does not approve anything, and that is worth being clear about before
+anybody installs it.
+
+The approval is made where it is always made. Somebody raises a change in
+ServiceNow, or a ticket in Jira, and whoever is allowed to approve it approves it
+there, with a window. That record, who approved it and when, stays in that
+system. This app reads it at the moment of the deployment and holds GitHub to it.
+
+```
+  ServiceNow / Jira             this app              GitHub
+  the change, the         ->    reads it and    ->    holds the deployment,
+  approval, the window          decides               then runs or fails it
+```
+
+Step by step:
+
+1. Somebody raises the change in ServiceNow or Jira.
+2. Whoever approves changes approves it there, with a start and an end.
+3. A developer pushes, with the ticket number in the commit message or on the
+   pull request.
+4. The workflow reaches the environment and GitHub holds the deployment.
+5. This app finds the ticket number, reads the ticket, and answers GitHub:
+   - approved and inside the window, the job runs
+   - approved but too early, keep waiting and look again in a minute
+   - not approved, refused, or the window is over, the job fails with the reason
+6. The reason ends up on the deployment, on the pull request and in the logs.
+
+Who owns what:
+
+| | owns |
+| --- | --- |
+| ServiceNow or Jira | the change record, the approval, the window |
+| this app | reading them, and answering the one deployment it was asked about |
+| GitHub | holding the deployment, and running or failing the job |
+
+What it never does:
+
+- it never creates, approves, changes or closes a ticket, it only reads
+- it never approves anything in GitHub except the one deployment that is waiting
+- it never decides on its own, if the ticket says no then the deployment fails
+
+Two things follow from that, and they are usually the reason for having it.
+
+**Nobody gets an approval button inside GitHub.** There is no reviewer list to
+keep up to date, and somebody with write access to the repository cannot wave
+their own deployment through, because the decision is not in the repository.
+
+**The evidence is already in the right place.** The approval sits in the change
+record with the name of whoever gave it, and GitHub keeps the deployment and the
+message saying which ticket it was and where it was read from. Nobody has to
+build a report out of two systems afterwards.
+
+That is also why this is a protection rule and not a required reviewer. A
+required reviewer asks a person to click something at deploy time, which is a
+second approval on top of the one that already exists. This one reads the
+approval that already exists.
+
 ## Which plans this works with
 
 **This app is written for the free plans of GitHub, Jira and ServiceNow, and it
