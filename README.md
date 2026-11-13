@@ -575,6 +575,21 @@ fields and put their ids in `JIRA_WINDOW_START_FIELD` and
 Free plan. With `DISCOVERY_MODE=poll` you need no public address and no tunnel
 for the app itself, your laptop is enough.
 
+## No warranty
+
+This is a free app and it is given away as it is. It is not a product, there is
+no support behind it, and nobody is on call for it.
+
+It sits in front of your deployments, so think about that before you put it
+somewhere that matters. If it says no when it should have said yes, your
+deployment does not go out. If it says yes when it should have said no, then
+something went out that nobody approved. Either way it is your environment and
+your problem.
+
+Try it somewhere harmless first, read the code, and keep the `local` backend for
+testing. The licence says the same thing in legal words, under the disclaimer of
+warranty and the limitation of liability.
+
 ## How it runs
 
 The app starts a few worker processes that share the port. One deployment that
