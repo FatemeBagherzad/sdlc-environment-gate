@@ -1,8 +1,8 @@
 # Copy this, fill it in and install with:
-#   helm install approval ./helm/env-approval-app -f my-values.yaml
+#   helm install approval ./helm/sdlc-environment-gate -f my-values.yaml
 
 image:
-  repository: ghcr.io/example/env-approval-app
+  repository: ghcr.io/example/sdlc-environment-gate
   tag: "1.0.0"
 
 app:

@@ -16,11 +16,11 @@ jobs:
         with:
           version: v3.16.4
 
-      - run: helm lint ./helm/env-approval-app
-      - run: helm lint ./helm/env-approval-app -f ./helm/env-approval-app/values-example.yaml
+      - run: helm lint ./helm/sdlc-environment-gate
+      - run: helm lint ./helm/sdlc-environment-gate -f ./helm/sdlc-environment-gate/values-example.yaml
 
       # render it with the defaults and with the poll mode, a broken template
       # fails here instead of on the cluster
-      - run: helm template approval ./helm/env-approval-app > /dev/null
-      - run: helm template approval ./helm/env-approval-app --set app.discoveryMode=poll --set github.organization=example > /dev/null
-      - run: helm template approval ./helm/env-approval-app --set ingress.enabled=true > /dev/null
+      - run: helm template approval ./helm/sdlc-environment-gate > /dev/null
+      - run: helm template approval ./helm/sdlc-environment-gate --set app.discoveryMode=poll --set github.organization=example > /dev/null
+      - run: helm template approval ./helm/sdlc-environment-gate --set ingress.enabled=true > /dev/null

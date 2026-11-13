@@ -1,7 +1,7 @@
 services:
   approval-app:
     build: .
-    image: env-approval-app:dev
+    image: sdlc-environment-gate:dev
     ports:
       - "3000:3000"
     environment:

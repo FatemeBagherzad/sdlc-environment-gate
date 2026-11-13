@@ -1,5 +1,5 @@
 apiVersion: v2
-name: env-approval-app
+name: sdlc-environment-gate
 description: GitHub app that approves deployment environments from a change ticket
 type: application
 version: 1.0.0

@@ -13,4 +13,4 @@ jobs:
       - uses: actions/checkout@v4
 
       # only building it, pushing is done by hand for now
-      - run: docker build -t env-approval-app:ci .
+      - run: docker build -t sdlc-environment-gate:ci .

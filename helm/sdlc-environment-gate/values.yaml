@@ -1,13 +1,13 @@
 # Name used for all the objects of this chart. Change it if you want to run the
 # app two times in the same namespace.
-fullname: env-approval-app
+fullname: sdlc-environment-gate
 
 # How many pods. One is enough, the app starts its own workers inside the pod.
 replicaCount: 1
 
 image:
   # where your image is pushed
-  repository: ghcr.io/example/env-approval-app
+  repository: ghcr.io/example/sdlc-environment-gate
   # use a real tag, latest make the rollback very hard
   tag: "1.0.0"
   pullPolicy: IfNotPresent

@@ -1,10 +1,15 @@
-# env-approval-app
+# sdlc-environment-gate
 
-A GitHub app that acts as an approver for GitHub deployment environments. When a
+A GitHub app that gates deployment environments on a change ticket. When a
 workflow reaches an environment that has this app as a deployment protection
-rule, the app looks for a change ticket number, checks that ticket in the
-configured backend, and then lets the deployment through, rejects it, or keeps
-it pending until the approved time window starts.
+rule, GitHub holds the deployment and asks this app about it. The app finds the
+change ticket number, reads that ticket in ServiceNow or Jira, and then lets the
+deployment through, fails it, or keeps it waiting until the approved window
+starts.
+
+It does not approve anything itself. The approval is made by the people who
+already make it, in ServiceNow or in Jira. This app only reads that decision and
+holds the deployment to it.
 
 There are three backends: `local`, `jira` and `servicenow`.
 
@@ -298,8 +303,8 @@ runs the unit tests.
 With Docker:
 
 ```bash
-docker build -t env-approval-app:dev .
-docker run --rm -p 3000:3000 --env-file .env -v "$PWD/tickets:/app/tickets" env-approval-app:dev
+docker build -t sdlc-environment-gate:dev .
+docker run --rm -p 3000:3000 --env-file .env -v "$PWD/tickets:/app/tickets" sdlc-environment-gate:dev
 ```
 
 With Docker Compose, which mounts `tickets/` and `state/` from the repository:
@@ -335,10 +340,10 @@ before its first step runs.
 
 ## Deploying with Helm
 
-The chart is in `helm/env-approval-app`.
+The chart is in `helm/sdlc-environment-gate`.
 
 ```bash
-helm install approval ./helm/env-approval-app -f my-values.yaml
+helm install approval ./helm/sdlc-environment-gate -f my-values.yaml
 ```
 
 `values-example.yaml` next to the chart shows what a real values file looks
@@ -363,7 +368,7 @@ The values that hold a comma separated list, like `poll.repositories` or
 reads the comma as the end of the value:
 
 ```bash
-helm install approval ./helm/env-approval-app --set-string poll.repositories="web\,api"
+helm install approval ./helm/sdlc-environment-gate --set-string poll.repositories="web\,api"
 ```
 
 In a values file they are plain strings and need none of that, which is easier.

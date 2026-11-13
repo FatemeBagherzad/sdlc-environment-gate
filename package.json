@@ -1,5 +1,5 @@
 {
-  "name": "env-approval-app",
+  "name": "sdlc-environment-gate",
   "version": "1.0.0",
   "private": true,
   "description": "GitHub app that approves deployment environments based on a change ticket",
