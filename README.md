@@ -13,6 +13,111 @@ holds the deployment to it.
 
 There are three backends: `local`, `jira` and `servicenow`.
 
+## Quick start
+
+The fastest way to see it work: a public repository, the `local` backend and the
+polling mode, so you need no public address for the app and no Jira or
+ServiceNow account. About ten minutes.
+
+**1. Make the GitHub app.** GitHub, **Settings** -> **Developer settings** ->
+**GitHub Apps** -> **New GitHub App**. Any name will do. Under Webhook, untick
+**Active**, the polling mode does not use it. Repository permissions:
+
+| permission | level |
+| --- | --- |
+| Actions | Read-only |
+| Contents | Read-only |
+| Deployments | Read and write |
+| Metadata | Read-only |
+| Pull requests | Read and write |
+
+Create it, write down the **App ID**, then **Generate a private key** and keep
+the `.pem` file it downloads.
+
+**2. Install it.** Same page, **Install App**, and pick one **public**
+repository. Public matters here, a custom protection rule on a private
+repository needs GitHub Enterprise.
+
+**3. Turn it on for an environment.** In that repository, **Settings** ->
+**Environments** -> **New environment**, call it `staging`, and under
+**Deployment protection rules** tick your app.
+
+**4. Give that repository a workflow.** Copy `examples/deployment-workflow.yml`
+into its `.github/workflows/` and put `staging` as the environment.
+
+**5. Run the gate on your machine.**
+
+```bash
+npm install
+npm run build
+```
+
+Put this in a `.env` file next to the app:
+
+```
+GITHUB_APP_ID=123456
+GITHUB_PRIVATE_KEY=<what "base64 -w0 your-key.pem" prints>
+DISCOVERY_MODE=poll
+GITHUB_ORG=<your github user name, or your organisation>
+POLL_INTERVAL_SECONDS=15
+BACKEND_MODE=local
+LOCAL_TICKETS_PATH=./tickets
+```
+
+Then `npm start`. It prints `poller started` and asks GitHub every 15 seconds,
+so nothing has to reach your machine.
+
+**6. Write a ticket.**
+
+```bash
+echo "status: approved" > tickets/CHG0045123.txt
+```
+
+**7. Push something to that repository.**
+
+```bash
+git commit --allow-empty -m "CHG0045123 first try"
+git push
+```
+
+The run stops at `staging` and continues within about 15 seconds. The deployment
+and the pull request say which ticket was used and where it was read from.
+
+**8. Now break it on purpose.**
+
+```bash
+git commit --allow-empty -m "deploy without a ticket"
+git push
+```
+
+That one is rejected, and the run says no change ticket number was found. Put
+`window_start` an hour from now into the ticket file and push again, and the run
+will sit and wait instead, until the window opens.
+
+### When that works, point it at the real thing
+
+Only the backend values change, nothing else. ServiceNow, on a free personal
+developer instance:
+
+```
+BACKEND_MODE=servicenow
+SERVICENOW_BASE_URL=https://dev12345.service-now.com
+SERVICENOW_USERNAME=admin
+SERVICENOW_PASSWORD=...
+```
+
+Jira, on a free cloud site:
+
+```
+BACKEND_MODE=jira
+JIRA_BASE_URL=https://mysite.atlassian.net
+JIRA_EMAIL=you@example.com
+JIRA_API_TOKEN=...
+JIRA_APPROVED_STATUSES=approved
+```
+
+The rest of this README is the detail behind those values.
+
 ## Which plans this works with
 
 **This app is written for the free plans of GitHub, Jira and ServiceNow, and it
